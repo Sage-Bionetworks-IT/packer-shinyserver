@@ -5,7 +5,10 @@ env:
   global:
     - REPO_NAME="${PWD##*/}"
     - IMAGE_NAME="${REPO_NAME}-${TRAVIS_BRANCH}"
-    - AWS_PROFILE="ci-role"
+#    - AWS_PROFILE="ci-role"
+    - AWS_ROLE_ARN="${AwsCfServiceRoleArn}"
+    - AWS_ACCESS_KEY_ID="${AwsTravisAccessKey}"
+    - AWS_SECRET_ACCESS_KEY="${AwsTravisSecretAccessKey}"
     - AWS_REGION="us-east-1"
     - AWS_SOURCE_IMAGE_PATH="/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2"
 install:
@@ -18,10 +21,10 @@ install:
   - unzip awscliv2.zip && sudo ./aws/install
   # install other tools
   - pip install pre-commit travis-wait-improved ansible
-before_script:
-  - mkdir -p ~/.aws
-  - echo -e "[${AWS_PROFILE}]\nregion=${AWS_REGION}\nsource_profile=ci-user\nrole_arn=${AwsCfServiceRoleArn}" > ~/.aws/config
-  - echo -e "[ci-user]\nregion=${AWS_REGION}\naws_access_key_id=${AwsTravisAccessKey}\naws_secret_access_key=${AwsTravisSecretAccessKey}" > ~/.aws/credentials
+#before_script:
+#  - mkdir -p ~/.aws
+#  - echo -e "[${AWS_PROFILE}]\nregion=${AWS_REGION}\nsource_profile=ci-user\nrole_arn=${AwsCfServiceRoleArn}" > ~/.aws/config
+#  - echo -e "[ci-user]\nregion=${AWS_REGION}\naws_access_key_id=${AwsTravisAccessKey}\naws_secret_access_key=${AwsTravisSecretAccessKey}" > ~/.aws/credentials
 stages:
 #  - name: validate
   - name: deploy-branch
@@ -37,11 +40,11 @@ jobs:
 #        - packer validate -var ImageName=${IMAGE_NAME} -var SourceImage="some_aws_image_path" template.json
     - stage: deploy-branch
       script:
-        - aws ssm get-parameters --profile ${AWS_PROFILE} --region ${AWS_REGION} --names ${AWS_SOURCE_IMAGE_PATH} --query 'Parameters[0].[Value]' --output text
+        - aws ssm get-parameters --names ${AWS_SOURCE_IMAGE_PATH} --query 'Parameters[0].[Value]' --output text
         - echo "${AWS_PROFILE}"
         - echo "${AWS_REGION}"
         - echo "${AWS_SOURCE_IMAGE_PATH}"
-        - LATEST_AMI=$(aws ssm get-parameters --profile ${AWS_PROFILE} --region ${AWS_REGION} --names ${AWS_SOURCE_IMAGE_PATH} --query 'Parameters[0].[Value]' --output text)
+        - export LATEST_AMI=$(aws ssm get-parameters --names ${AWS_SOURCE_IMAGE_PATH} --query 'Parameters[0].[Value]' --output text)
         - echo "${LATEST_AMI}"
 #        - pushd src
 #        - travis-wait-improved --timeout 45m packer build -force -var AwsProfile=${AWS_PROFILE} -var ImageName=${IMAGE_NAME} -var SourceImage=${LATEST_AMI} template.json
