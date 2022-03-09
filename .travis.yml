@@ -37,10 +37,11 @@ jobs:
 #        - packer validate -var ImageName=${IMAGE_NAME} -var SourceImage="some_aws_image_path" template.json
     - stage: deploy-branch
       script:
+        - aws ssm get-parameters --profile ${AWS_PROFILE} --region ${AWS_REGION} --names ${AWS_SOURCE_IMAGE_PATH} --query 'Parameters[0].[Value]' --output text
         - echo "${AWS_PROFILE}"
         - echo "${AWS_REGION}"
         - echo "${AWS_SOURCE_IMAGE_PATH}"
-        - export LATEST_AMI=$(aws ssm get-parameters --profile ${AWS_PROFILE} --region ${AWS_REGION} --names ${AWS_SOURCE_IMAGE_PATH} --query 'Parameters[0].[Value]' --output text)
+        - LATEST_AMI=$(aws ssm get-parameters --profile ${AWS_PROFILE} --region ${AWS_REGION} --names ${AWS_SOURCE_IMAGE_PATH} --query 'Parameters[0].[Value]' --output text)
         - echo "${LATEST_AMI}"
 #        - pushd src
 #        - travis-wait-improved --timeout 45m packer build -force -var AwsProfile=${AWS_PROFILE} -var ImageName=${IMAGE_NAME} -var SourceImage=${LATEST_AMI} template.json
