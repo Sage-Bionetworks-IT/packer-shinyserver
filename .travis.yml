@@ -41,6 +41,7 @@ jobs:
     - stage: deploy-branch
       script:
         - aws ssm get-parameters --names ${AWS_SOURCE_IMAGE_PATH} --query 'Parameters[0].[Value]' --output text
+        - echo "${AWS_ROLE_ARN}"
         - echo "${AWS_PROFILE}"
         - echo "${AWS_REGION}"
         - echo "${AWS_SOURCE_IMAGE_PATH}"
